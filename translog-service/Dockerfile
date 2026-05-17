@@ -1,6 +1,5 @@
 # Stage 1: Builder
-FROM golang:1.21-alpine AS builder
-
+FROM golang:1.26-alpine AS builder
 # Install git untuk dependency jika diperlukan
 RUN apk add --no-cache git
 

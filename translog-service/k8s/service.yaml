@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{SERVICE_NAME}}-Service
+  name: translog-service
 spec:
   selector:
-    app: {{SERVICE_NAME}}
+    app: translog-service
   ports:
     - protocol: TCP
-      port: {{SERVICE_PORT}}      # Port yang diakses dari luar
-      targetPort: {{SERVICE_PORT}} # Port di dalam container
+      port: 8008
+      targetPort: 8008
   type: ClusterIP

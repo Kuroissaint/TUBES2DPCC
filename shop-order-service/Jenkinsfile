@@ -31,23 +31,44 @@ pipeline {
             }
         }
 
-        stage('4. Functional Test') {
+        stage('4. Build & Push Image') {
             steps {
-                // Jalankan test yang butuh DB lokal/container
-                sh 'go test -tags=functional ./...'
-            }
-        }
-
-        stage('5. Deploy to Kubernetes') {
-            steps {
-                script {
-                    // Update manifest k8s dengan image terbaru dan apply
-                    sh "kubectl apply -f k8s/"
-                    sh "kubectl rollout restart deployment/${SERVICE_NAME}"
+                dir("${SERVICE_NAME}") {
+                    // Tahap 4: Build Image Lokal
+                    sh "docker build -t ${DOCKER_IMAGE} ."
+                    
+                    // Tahap 6: Push Image ke Registry (Docker Hub)
+                    // Asumsi: Credentials Docker Hub sudah diset di Jenkins dengan ID 'dockerhub-creds'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                        sh "docker push ${DOCKER_IMAGE}"
+                    }
                 }
             }
         }
-    }
+
+        stage('5. Functional Tests') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    // Tahap 5: Fungsional Test
+                    sh 'go test -v -run Functional ./...'
+                }
+            }
+        }
+
+        stage('6. Deploy & Verify K8s') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    // Tahap 7: Deploy ke Kubernetes
+                    // Mengubah placeholder image di deployment.yaml menjadi image terbaru
+                    sh "sed -i 's|my-registry/${SERVICE_NAME}:latest|${DOCKER_IMAGE}|g' k8s/deployment.yaml"
+                    sh "kubectl apply -f k8s/"
+                    
+                    // Tahap 8: Verify (Memastikan Pod beneran jalan/ready)
+                    sh "kubectl rollout status deployment/${SERVICE_NAME} --timeout=90s"
+                }
+            }
+        }
 
     post {
         success {
