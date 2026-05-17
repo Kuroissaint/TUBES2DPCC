@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"testing"
-	// _ "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 func TestFunctionalDBTransportConnection(t *testing.T) {
