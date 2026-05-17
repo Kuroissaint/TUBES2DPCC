@@ -49,8 +49,8 @@ pipeline {
                     powershell "((Get-Content k8s/deployment.yaml) -replace 'my-registry/${SERVICE_NAME}:latest', '${DOCKER_IMAGE}') | Set-Content k8s/deployment.yaml"
                     
                     bat 'kubectl --kubeconfig="C:\\Users\\ASUS\\.kube\\config" apply -f k8s/'
-                    // Perbaikan: menunjuk ke deployment shop-order-service
-                    bat 'kubectl --kubeconfig="C:\\Users\\ASUS\\.kube\\config" rollout status deployment/${SERVICE_NAME} --timeout=90s'
+                    // Ubah baris di bawah ini: ganti ${SERVICE_NAME} dengan nama aslinya
+                    bat 'kubectl --kubeconfig="C:\\Users\\ASUS\\.kube\\config" rollout status deployment/shop-order-service --timeout=90s'
                 }
             }
         }
