@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    // Tambahkan blok environment ini untuk mematikan go.work di CI/CD
+    environment {
+        GOWORK = 'off'
+    }
+    
     stages {
         // Poin 1: Checkout Repo (Tetap di luar karena menarik seluruh Git)
         stage('1. Checkout Repo') {
