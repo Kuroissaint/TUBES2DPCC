@@ -1,87 +1,66 @@
 pipeline {
     agent any
 
-    environment {
-        // Ganti nama service menjadi dispatch-service
-        SERVICE_NAME = "dispatch-service" 
-        DOCKER_IMAGE = "my-registry/${SERVICE_NAME}:${env.BUILD_NUMBER}"
-    }
-
     stages {
         stage('1. Checkout Repo') {
             steps {
-                checkout scm
+                // Jenkins otomatis melakukan checkout repo utama ke workspace
+                echo 'Repository checked out successfully.'
             }
         }
 
-        // 2. Unit Tests (go test)
         stage('2. Unit Tests') {
             steps {
-                // Menjalankan test tanpa tag functional
-                sh 'go test ./... -v'
-            }
-        }
-
-        // 3. Lint/Vet (go vet)
-        stage('3. Lint/Vet') {
-            steps {
-                // Tambahan sesuai instruksi tugas tahap 2
-                sh 'go vet ./...'
-            }
-        }
-
-        // 4. Build Image (lokal)
-        stage('4. Build Image') {
-            steps {
-                // Build docker image secara lokal di server Jenkins
-                sh "docker build -t ${DOCKER_IMAGE} ." 
-            }
-        }
-
-        // 5. Functional Tests (test app di lokal atau staging)
-        stage('5. Functional Tests') {
-            steps {
-                // Menjalankan test yang menggunakan database
-                // Menggunakan tag functional agar beda dengan unit test
-                sh 'go test -tags=functional ./... -v'
-            }
-        }
-
-        // 6. Push image
-        stage('6. Push Image') {
-            steps {
-                // Push ke registry setelah test dipastikan aman
-                echo "Pushing ${DOCKER_IMAGE} to registry..."
-                // sh "docker push ${DOCKER_IMAGE}" 
-            }
-        }
-
-        // 7. Deploy di kubernetes
-        stage('7. Deploy to Kubernetes') {
-            steps {
-                script {
-                    // Update manifest k8s dan apply
-                    sh "kubectl apply -f k8s/"
-                    sh "kubectl rollout restart deployment/${SERVICE_NAME}"
+                // Masuk ke folder service sebelum run test
+                dir('dispatch-service') {
+                    sh 'go test ./... -v'
                 }
             }
         }
 
-        // 8. Verify
-        stage('8. Verify') {
+        stage('3. Lint/Vet') {
             steps {
-                // Memastikan deployment berhasil (Rollout status)
-                sh "kubectl rollout status deployment/${SERVICE_NAME}"
+                dir('dispatch-service') {
+                    sh 'go vet ./...'
+                }
             }
         }
-    }
 
-    post {
-        success {
-            echo "Successfully deployed ${SERVICE_NAME} version ${env.BUILD_NUMBER}"
+        stage('4. Build Image') {
+            steps {
+                dir('dispatch-service') {
+                    sh 'docker build -t dispatch-service:latest .'
+                }
+            }
         }
-        failure {
-            echo "Deployment failed! Check logs."
+
+        stage('5. Functional Tests') {
+            steps {
+                dir('dispatch-service') {
+                    sh 'go test -tags=functional ./... -v'
+                }
+            }
+        }
+
+        stage('6. Push Image') {
+            steps {
+                echo 'Skipping push image for local development...'
+                // sh 'docker push dispatch-service:latest'
+            }
+        }
+
+        stage('7. Deploy di Kubernetes') {
+            steps {
+                dir('dispatch-service') {
+                    sh 'kubectl apply -f k8s/'
+                }
+            }
+        }
+
+        stage('8. Verify') {
+            steps {
+                sh 'kubectl rollout status deployment/dispatch-service'
+            }
         }
     }
 }
