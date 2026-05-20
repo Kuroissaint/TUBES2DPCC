@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME = "account-service"
-        DOCKER_IMAGE = "firdaaridzkii/${SERVICE_NAME}:${env.BUILD_NUMBER}"
+        SERVICE_NAME = "review-rating-service" 
+        DOCKER_IMAGE = "rifadanindra/${SERVICE_NAME}:${env.BUILD_NUMBER}"
         GOWORK = 'off'
     }
 
@@ -16,7 +16,7 @@ pipeline {
 
         stage('2. Unit Tests') {
             steps {
-                dir('account-service') {
+                dir('reviewrating-service') {
                     bat 'go test ./... -v'
                 }
             }
@@ -24,23 +24,23 @@ pipeline {
 
         stage('3. Lint / Vet') {
             steps {
-                dir('account-service') {
-                    bat 'go vet ./...'
+                dir('reviewrating-service') {
+                        bat 'go vet ./...'
                 }
             }
         }
 
         stage('4. Build Image (Lokal)') {
             steps {
-                dir('account-service') {
-                    bat "docker build -t ${DOCKER_IMAGE} ."
+                dir('reviewrating-service') {
+                        bat "docker build -t ${DOCKER_IMAGE} ."
                 }
             }
         }
 
         stage('5. Functional Tests') {
             steps {
-                dir('account-service') {
+                dir('reviewrating-service') {
                     bat 'go test -tags=functional ./... -v'
                 }
             }
@@ -54,7 +54,7 @@ pipeline {
 
         stage('7. Deploy di Kubernetes') {
             steps {
-                dir('account-service') {
+                dir('reviewrating-service') {
                     bat "kubectl apply -f k8s/"
                     bat "kubectl rollout restart deployment/${SERVICE_NAME}"
                 }
@@ -73,7 +73,6 @@ pipeline {
         success {
             echo "Successfully deployed ${SERVICE_NAME} version ${env.BUILD_NUMBER}"
         }
-
         failure {
             echo "Deployment failed! Check logs."
         }

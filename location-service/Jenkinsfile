@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    tools {
+        go 'go-1.21'
+    }
+
+    stages {
+        stage('1. Checkout Repo') {
+            steps {
+                echo 'Repository checked out successfully.'
+            }
+        }
+
+        stage('2. Unit Tests') {
+            steps {
+                dir('location-service') {
+                    sh 'GOWORK=off go test ./... -v'
+                }
+            }
+        }
+
+        stage('3. Lint/Vet') {
+            steps {
+                dir('location-service') {
+                    sh 'GOWORK=off go vet ./...'
+                }
+            }
+        }
+
+        stage('4. Build Image') {
+            steps {
+                dir('location-service') {
+                    sh 'docker build -t location-service:latest .'
+                }
+            }
+        }
+
+        stage('5. Functional Tests') {
+            steps {
+                dir('location-service') {
+                    sh 'GOWORK=off go test -tags=functional ./... -v'
+                }
+            }
+        }
+
+        stage('6. Push Image') {
+            steps {
+                echo 'Skipping push image for local development...'
+            }
+        }
+
+        stage('7. Deploy di Kubernetes') {
+            steps {
+                dir('location-service') {
+                    sh 'kubectl apply -f k8s/'
+                }
+            }
+        }
+
+        stage('8. Verify') {
+            steps {
+                sh 'kubectl rollout status deployment/location-service'
+            }
+        }
+    }
+}
