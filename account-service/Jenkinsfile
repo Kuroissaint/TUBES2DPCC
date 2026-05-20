@@ -12,7 +12,7 @@ pipeline {
         stage('2. Unit Tests') {
             steps {
                 dir('account-service') {
-                    bat 'set GOWORK=off && go test ./... -count=1'
+                    bat 'go test ./... -count=1'
                 }
             }
         }
@@ -20,7 +20,7 @@ pipeline {
         stage('3. Lint/Vet') {
             steps {
                 dir('account-service') {
-                    bat 'set GOWORK=off && go vet ./...'
+                    bat 'go vet ./...'
                 }
             }
         }
@@ -37,7 +37,7 @@ pipeline {
             steps {
                 dir('account-service') {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        bat 'set GOWORK=off && go test ./test -v'
+                        bat 'go test ./test -v'
                     }
                 }
             }
