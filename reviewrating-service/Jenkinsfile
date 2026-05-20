@@ -15,45 +15,45 @@ pipeline {
 
         stage('2. Unit Tests') {
             steps {
-                sh 'go test ./... -v'
+                bat 'go test ./... -v'
             }
         }
 
         stage('3. Lint / Vet') {
             steps {
-                sh 'go vet ./...'
+                bat 'go vet ./...'
             }
         }
 
         stage('4. Build Image (Lokal)') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE} ."
+                bat "docker build -t ${DOCKER_IMAGE} ."
             }
         }
 
         stage('5. Functional Tests') {
             steps {
-                sh 'go test -tags=functional ./... -v'
+                bat 'go test -tags=functional ./... -v'
             }
         }
 
         stage('6. Push Image') {
             steps {
-                sh "docker push ${DOCKER_IMAGE}"
+                bat "docker push ${DOCKER_IMAGE}"
             }
         }
 
         stage('7. Deploy di Kubernetes') {
             steps {
-                sh "kubectl apply -f k8s/"
-                sh "kubectl rollout restart deployment/${SERVICE_NAME}"
+                bat "kubectl apply -f k8s/"
+                bat "kubectl rollout restart deployment/${SERVICE_NAME}"
             }
         }
 
         stage('8. Verify') {
             steps {
-                sh "kubectl rollout status deployment/${SERVICE_NAME}"
-                sh "kubectl get pods -l app=${SERVICE_NAME}"
+                bat "kubectl rollout status deployment/${SERVICE_NAME}"
+                bat "kubectl get pods -l app=${SERVICE_NAME}"
             }
         }
     }
