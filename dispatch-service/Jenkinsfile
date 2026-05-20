@@ -1,9 +1,8 @@
 pipeline {
     agent any
 
-    // INI KUNCINYA: Memberitahu Jenkins untuk load installer/tools Go kamu
     tools {
-        go 'go-1.21' // Sesuaikan dengan nama konfigurasi Go di Manage Jenkins kamu, biasanya 'go-1.21' atau 'go'
+        go 'go-1.21' 
     }
 
     environment {
@@ -58,11 +57,18 @@ pipeline {
         stage('6. Deploy & Verify K8s') {
             steps {
                 dir("${SERVICE_NAME}") {
+                    // Replace registry tag di deployment manifest
                     sh "sed -i 's|my-registry/${SERVICE_NAME}:latest|${DOCKER_IMAGE}|g' k8s/deployment.yaml"
                     
-                    sh 'mkdir -p ~/.kube'
-                    sh 'kubectl apply -f k8s/ --validate=false'
-                    sh 'kubectl rollout status deployment/dispatch-service --timeout=90s'
+                    // Mengambil isi kubeconfig Windows lu dari brankas Jenkins agar kubectl Linux tidak nyasar
+                    withCredentials([string(credentialsId: 'k8s-config', variable: 'KUBECONFIG_CONTENT')]) {
+                        sh 'mkdir -p ~/.kube'
+                        sh 'echo "$KUBECONFIG_CONTENT" > ~/.kube/config'
+                        
+                        // Menjalankan apply ke kluster Kubernetes local
+                        sh 'kubectl apply -f k8s/ --validate=false'
+                        sh 'kubectl rollout status deployment/dispatch-service --timeout=90s'
+                    }
                 }
             }
         }
