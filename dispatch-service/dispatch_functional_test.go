@@ -22,7 +22,7 @@ func TestDispatchDBConnection_Functional(t *testing.T) {
 
 	dbUser := "postgres"
 	dbPass := "123"
-	dbHost := "localhost"
+	dbHost := "host.docker.internal"
 
 	// Membuat string koneksi
 	connStr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", 
