@@ -57,17 +57,14 @@ pipeline {
         stage('6. Deploy & Verify K8s') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    // Replace registry tag di deployment manifest
+                    // Replace registry tag di manifest k8s kamu
                     sh "sed -i 's|my-registry/${SERVICE_NAME}:latest|${DOCKER_IMAGE}|g' k8s/deployment.yaml"
                     
-                    // Mengambil isi kubeconfig Windows lu dari brankas Jenkins agar kubectl Linux tidak nyasar
-                    withCredentials([string(credentialsId: 'k8s-config', variable: 'KUBECONFIG_CONTENT')]) {
-                        sh 'mkdir -p ~/.kube'
-                        sh 'echo "$KUBECONFIG_CONTENT" > ~/.kube/config'
-                        
-                        // Menjalankan apply ke kluster Kubernetes local
-                        sh 'kubectl apply -f k8s/ --validate=false'
-                        sh 'kubectl rollout status deployment/dispatch-service --timeout=90s'
+                    // Kerennya di sini: Karena tipe 'Secret file', Jenkins otomatis menyediakan path file 
+                    // konfigurasi tersebut lewat variabel rahasia ini, tinggal panggil pakai --kubeconfig!
+                    withCredentials([file(credentialsId: 'k8s-config', variable: 'KUBECONFIG')]) {
+                        sh "kubectl --kubeconfig=\$KUBECONFIG apply -f k8s/ --validate=false"
+                        sh "kubectl --kubeconfig=\$KUBECONFIG rollout status deployment/dispatch-service --timeout=90s"
                     }
                 }
             }
