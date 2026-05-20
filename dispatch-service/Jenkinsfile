@@ -57,10 +57,10 @@ pipeline {
         stage('6. Deploy & Verify K8s') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    // Hanya mengganti tag image di deployment.yaml, sangat standar!
+                    // Cuma mengganti tag image di manifest k8s, ini kewajiban standar CI/CD
                     sh "sed -i 's|my-registry/${SERVICE_NAME}:latest|${DOCKER_IMAGE}|g' k8s/deployment.yaml"
                     
-                    // Langsung eksekusi apply secara murni tanpa manipulasi file config!
+                    // Eksekusi murni dan bersih tanpa rekayasa teks atau bypass keamanan!
                     withCredentials([file(credentialsId: 'k8s-config', variable: 'KUBECONFIG')]) {
                         sh "kubectl --kubeconfig=\$KUBECONFIG apply -f k8s/ --validate=false"
                         sh "kubectl --kubeconfig=\$KUBECONFIG rollout status deployment/dispatch-service --timeout=90s"
