@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Database utama untuk bareng-bareng
+  db-postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Service Location kamu
+  location-service:
+    build: ./location-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DB_HOST=db-postgres
+      - DB_NAME=db_location
+      - DB_USER=postgres
+      - DB_PASSWORD=123
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+
+  # Service Dispatch kamu
+  dispatch-service:
+    build: ./dispatch-service
+    ports:
+      - "8003:8003"
+    environment:
+      - DB_HOST=db-postgres
+      - DB_NAME=db_dispatch
+      - DB_USER=postgres
+      - DB_PASSWORD=123
+    depends_on:
+      db-postgres:
+        condition: service_healthy
