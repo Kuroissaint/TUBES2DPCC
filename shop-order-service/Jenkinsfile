@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME = "shop-order-service"
-        DOCKER_IMAGE = "kuroissaint/${SERVICE_NAME}:${env.BUILD_NUMBER}"
+        SERVICE_NAME  = 'shop-order-service'
+        DOCKER_HUB_ID = 'username_dockerhub_kamu' // Ubah sesuai username Docker Hub kelompok/pribadi
+        DOCKER_IMAGE  = "${DOCKER_HUB_ID}/${SERVICE_NAME}:latest"
     }
 
     stages {
@@ -16,52 +17,61 @@ pipeline {
         stage('2. Unit Tests') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    bat 'go test -v ./... -skip Functional' 
+                    bat 'go test -v ./...'
                 }
             }
         }
 
-        stage('3. Build & Push Image') {
+        stage('3. Lint / Vet') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    bat 'go vet ./...'
+                }
+            }
+        }
+
+        stage('4. Build Image (Lokal)') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    bat "docker build -t ${DOCKER_IMAGE} ."
+                }
+            }
+        }
+
+        stage('5. Functional Tests') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    bat 'go test -tags=functional -v ./...'
+                }
+            }
+        }
+
+        stage('6. Push Image') {
             steps {
                 dir("${SERVICE_NAME}") {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                        
-                        // Cara ini 100% kebal karakter spesial dan tidak ada tambahan 'Enter'
-                        powershell 'docker login -u $env:DOCKER_USER -p $env:DOCKER_PASS'
-                        
-                        // Lanjut build & push
-                        bat "docker build -t ${DOCKER_IMAGE} ."
+                        bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
                         bat "docker push ${DOCKER_IMAGE}"
                     }
                 }
             }
         }
 
-        stage('4. Functional Tests') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    // Tambahan || exit 0 supaya pipeline tidak berhenti karena DB belum ada
-                    bat 'go test -v -run Functional ./... || exit 0'
-                }
-            }
-        }
-
-        stage('5. Deploy & Verify K8s') {
+        stage('7. Deploy di Kubernetes') {
             steps {
                 dir("${SERVICE_NAME}") {
                     powershell "((Get-Content k8s/deployment.yaml) -replace 'my-registry/${SERVICE_NAME}:latest', '${DOCKER_IMAGE}') | Set-Content k8s/deployment.yaml"
-                    
                     bat 'kubectl --kubeconfig="C:\\Users\\ASUS\\.kube\\config" apply -f k8s/'
-                    // Ubah baris di bawah ini: ganti ${SERVICE_NAME} dengan nama aslinya
-                    bat 'kubectl --kubeconfig="C:\\Users\\ASUS\\.kube\\config" rollout status deployment/shop-order-service --timeout=90s'
                 }
             }
         }
-    }
 
-    post {
-        always {
-            echo "Pipeline untuk ${SERVICE_NAME} selesai dieksekusi."
+        stage('8. Verify') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    bat "kubectl --kubeconfig=\"C:\\Users\\ASUS\\.kube\\config\" rollout status deployment/${SERVICE_NAME} --timeout=90s"
+                }
+            }
         }
     }
 }

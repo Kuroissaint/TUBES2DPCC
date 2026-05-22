@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
-// Standar Response JSON
 type StandardResponse struct {
 	Status  string      `json:"status"`
 	Data    interface{} `json:"data,omitempty"`
@@ -21,39 +18,34 @@ type TransportOrder struct {
 	UserID        string  `json:"user_id"`
 	Status        string  `json:"status"`
 	ServiceType   string  `json:"service_type"`
-	ItemDimension float64 `json:"item_dimension,omitempty"` // Khusus delivery
+	ItemDimension float64 `json:"item_dimension,omitempty"`
 }
 
-// Logika Bisnis: Validasi Transisi Status
-func ValidateStatusTransition(currentStatus, newStatus string) error {
-	if currentStatus == "SEARCHING" && newStatus == "COMPLETED" {
-		return fmt.Errorf("pesanan tidak bisa langsung COMPLETED dari SEARCHING")
-	}
-	return nil
-}
+func createOrderHandler(svc TranslogService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-// Handler HTTP
-func createOrderHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	
-	newOrder := TransportOrder{
-		OrderID:     uuid.New().String(),
-		UserID:      uuid.New().String(),
-		Status:      "SEARCHING",
-		ServiceType: "ride",
-	}
+		order, err := svc.CreateTransportOrder()
+		if err != nil {
+			http.Error(w, "Gagal memproses pesanan", http.StatusInternalServerError)
+			return
+		}
 
-	response := StandardResponse{
-		Status:  "success",
-		Data:    newOrder,
-		Message: "Order transportasi berhasil dibuat",
+		response := StandardResponse{
+			Status:  "success",
+			Data:    order,
+			Message: "Order transportasi berhasil dibuat",
+		}
+
+		json.NewEncoder(w).Encode(response)
 	}
-	
-	json.NewEncoder(w).Encode(response)
 }
 
 func main() {
-	http.HandleFunc("/api/orders/transport", createOrderHandler)
+	repo := NewTranslogRepository()
+	svc := NewTranslogService(repo)
+
+	http.HandleFunc("/api/orders/transport", createOrderHandler(svc))
 	fmt.Println("Transport Order Service berjalan di port 8005...")
 	log.Fatal(http.ListenAndServe(":8005", nil))
 }
