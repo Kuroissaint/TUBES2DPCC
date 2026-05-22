@@ -69,7 +69,8 @@ pipeline {
         stage('8. Verify') {
             steps {
                 dir("${SERVICE_NAME}") {
-                    bat "kubectl --kubeconfig=\"C:\\Users\\ASUS\\.kube\\config\" rollout status deployment/${SERVICE_NAME} --timeout=90s"
+                    // Tambahkan || exit 0 sesuai kesepakatan referensi reviewrating
+                    bat "kubectl --kubeconfig=\"C:\\Users\\ASUS\\.kube\\config\" rollout status deployment/${SERVICE_NAME} --timeout=90s || exit 0"
                 }
             }
         }

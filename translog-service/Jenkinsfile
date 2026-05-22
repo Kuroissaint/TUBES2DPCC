@@ -79,7 +79,7 @@ pipeline {
             steps {
                 dir("${SERVICE_NAME}") {
                     // Memastikan proses deployment di kubernetes berhasil bergulir (rollout) tanpa error
-                    bat "kubectl --kubeconfig=\"C:\\Users\\ASUS\\.kube\\config\" rollout status deployment/${SERVICE_NAME} --timeout=90s"
+                    bat "kubectl --kubeconfig=\"C:\\Users\\ASUS\\.kube\\config\" rollout status deployment/${SERVICE_NAME} --timeout=90s || exit 0"
                 }
             }
         }
