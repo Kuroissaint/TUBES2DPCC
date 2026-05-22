@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: location-service
-        image: my-registry/location-service:latest # Akan di-update oleh Jenkins
+        image: my-registry/location-service:35 # Akan di-update oleh Jenkins
         ports:
         - containerPort: 8002 # Jatah port untuk Location
         env:

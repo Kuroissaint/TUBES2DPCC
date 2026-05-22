@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: dispatch-service
-        image: my-registry/dispatch-service:latest
+        image: my-registry/dispatch-service:9
         ports:
         - containerPort: 8003 # Pakai jatah Port Dispatch
         env:
