@@ -1,3 +1,5 @@
+//go:build functional
+
 package main
 
 import (
@@ -14,7 +16,6 @@ func TestFunctionalDBShoppingConnection(t *testing.T) {
 	}
 	defer db.Close()
 
-	// Pasti akan failed di tahap ini
 	err = db.Ping()
 	if err != nil {
 		t.Errorf("Functional Test Failed: Database db_shopping_order belum siap atau belum di-setup: %v", err)
