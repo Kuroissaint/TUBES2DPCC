@@ -2,20 +2,28 @@ package main
 
 import (
 	"testing"
+	"github.com/golang/mock/gomock"
+	// Sesuaikan "dispatch-service/mocks" dengan nama di go.mod kamu
+	"dispatch-service/mocks" 
 )
 
 func TestFindNearestDriver_Unit(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mocks.NewMockDispatchRepository(ctrl)
+	service := NewDispatchService(mockRepo)
+
 	lat := -6.200000
 	lng := 106.816666
 	t.Logf("Mencari driver terdekat untuk lokasi: %f, %f", lat, lng)
 
-	// Memanggil fungsi asli dari main.go
-	driver, err := FindNearestDriver(lat, lng)
+	// Memanggil lewat service
+	driver, err := service.FindNearestDriver(lat, lng)
 	if err != nil {
 		t.Fatalf("Fungsi error: %v", err)
 	}
 
-	// Memastikan data driver terdekat berhasil ditemukan
 	if driver.ID == "" {
 		t.Errorf("Unit Test FAILED: ID Driver kosong")
 	}
@@ -25,16 +33,21 @@ func TestFindNearestDriver_Unit(t *testing.T) {
 }
 
 func TestAssignDriverStatus_Unit(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mocks.NewMockDispatchRepository(ctrl)
+	service := NewDispatchService(mockRepo)
+
 	driverID := "DRV-001"
 	status := "pending"
 
-	// Memanggil fungsi asli dari main.go
-	driver, err := AssignDriver(driverID, status)
+	// Memanggil lewat service
+	driver, err := service.AssignDriver(driverID, status)
 	if err != nil {
 		t.Fatalf("Fungsi error: %v", err)
 	}
 
-	// Memastikan status berhasil berubah menjadi 'assigned' dan tidak tertahan di 'pending'
 	if driver.Status == "pending" {
 		t.Fatalf("Unit Test FAILED: Logika penugasan gagal, status tetap: pending")
 	}
