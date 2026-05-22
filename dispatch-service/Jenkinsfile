@@ -61,7 +61,7 @@ pipeline {
                     
                     withCredentials([file(credentialsId: 'k8s-config', variable: 'KUBECONFIG_TMP')]) {
                         sh 'cp $KUBECONFIG_TMP ./kubeconfig_local'
-                        sh 'sed -i "s|127.0.0.1|192.168.49.2|g" ./kubeconfig_local'
+                        sh 'sed -i "s|127.0.0.1|192.168.49.2:49295|g" ./kubeconfig_local'
                         
                         // Perintah apply dan rollout status sudah dikasih pengaman anti-eror
                         sh "kubectl --kubeconfig=./kubeconfig_local apply -f k8s/ --validate=false --insecure-skip-tls-verify=true"
