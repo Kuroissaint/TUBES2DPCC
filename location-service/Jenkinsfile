@@ -67,7 +67,7 @@ pipeline {
                     withCredentials([file(credentialsId: 'k8s-config', variable: 'KUBECONFIG_TMP')]) {
                         // Trik Jalur Suci
                         sh 'cp $KUBECONFIG_TMP ./kubeconfig_local'
-                        sh 'sed -i "s|127.0.0.1:[0-9]*|192.168.49.2:49295|g" ./kubeconfig_local'
+                        sh 'sed -i "s|127.0.0.1:[0-9]*|host.docker.internal:49295|g" ./kubeconfig_local'
                         
                         // Eksekusi Apply & Rollout (Bypass TLS)
                         sh "kubectl --kubeconfig=./kubeconfig_local apply -f k8s/ --validate=false --insecure-skip-tls-verify=true"
