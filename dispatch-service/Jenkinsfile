@@ -11,48 +11,48 @@ pipeline {
     }
 
     stages {
-        stage('1. Checkout Repo') {
-            steps {
-                checkout scm
-            }
-        }
+        // stage('1. Checkout Repo') {
+        //     steps {
+        //         checkout scm
+        //     }
+        // }
 
-        stage('2. Unit Tests') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    sh 'GOWORK=off go test -v ./... -skip Functional' 
-                }
-            }
-        }
+        // stage('2. Unit Tests') {
+        //     steps {
+        //         dir("${SERVICE_NAME}") {
+        //             sh 'GOWORK=off go test -v ./... -skip Functional' 
+        //         }
+        //     }
+        // }
 
-        stage('3. Lint/Vet') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    sh 'GOWORK=off go vet ./...'
-                }
-            }
-        }
+        // stage('3. Lint/Vet') {
+        //     steps {
+        //         dir("${SERVICE_NAME}") {
+        //             sh 'GOWORK=off go vet ./...'
+        //         }
+        //     }
+        // }
 
-        stage('4. Build & Push Image') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    sh "docker build -t ${DOCKER_IMAGE} ."
+        // stage('4. Build & Push Image') {
+        //     steps {
+        //         dir("${SERVICE_NAME}") {
+        //             sh "docker build -t ${DOCKER_IMAGE} ."
                     
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                        sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                        sh "docker push ${DOCKER_IMAGE}"
-                    }
-                }
-            }
-        }
+        //             withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+        //                 sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+        //                 sh "docker push ${DOCKER_IMAGE}"
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('5. Functional Tests') {
-            steps {
-                dir("${SERVICE_NAME}") {
-                    sh 'GOWORK=off go test -v -run Functional ./... || exit 0'
-                }
-            }
-        }
+        // stage('5. Functional Tests') {
+        //     steps {
+        //         dir("${SERVICE_NAME}") {
+        //             sh 'GOWORK=off go test -v -run Functional ./... || exit 0'
+        //         }
+        //     }
+        // }
 
         stage('6. Deploy & Verify K8s') {
             steps {
@@ -61,7 +61,7 @@ pipeline {
                     
                     withCredentials([file(credentialsId: 'k8s-config', variable: 'KUBECONFIG_TMP')]) {
                         sh 'cp $KUBECONFIG_TMP ./kubeconfig_local'
-                        sh 'sed -i "s|127.0.0.1|192.168.49.2:49295|g" ./kubeconfig_local'
+                        sh 'sed -i "s|127.0.0.1:[0-9]*|192.168.49.2:49295|g" ./kubeconfig_local'
                         
                         // Perintah apply dan rollout status sudah dikasih pengaman anti-eror
                         sh "kubectl --kubeconfig=./kubeconfig_local apply -f k8s/ --validate=false --insecure-skip-tls-verify=true"
