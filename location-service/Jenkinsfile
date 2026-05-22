@@ -12,50 +12,50 @@ pipeline {
     }
 
     stages {
-        // // 1. Checkout
-        // stage('1. Checkout Repo') {
-        //     steps { checkout scm }
-        // }
+        // 1. Checkout
+        stage('1. Checkout Repo') {
+            steps { checkout scm }
+        }
 
-        // // 2. Unit Tests
-        // stage('2. Unit Tests') {
-        //     steps {
-        //         dir("${SERVICE_NAME}") {
-        //             sh 'GOWORK=off go test -v ./... -skip Functional' 
-        //         }
-        //     }
-        // }
+        // 2. Unit Tests
+        stage('2. Unit Tests') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    sh 'GOWORK=off go test -v ./... -skip Functional' 
+                }
+            }
+        }
 
-        // // 3. Lint/Vet
-        // stage('3. Lint/Vet') {
-        //     steps {
-        //         dir("${SERVICE_NAME}") {
-        //             sh 'GOWORK=off go vet ./...'
-        //         }
-        //     }
-        // }
+        // 3. Lint/Vet
+        stage('3. Lint/Vet') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    sh 'GOWORK=off go vet ./...'
+                }
+            }
+        }
 
-        // // 4. Build & Push
-        // stage('4. Build & Push Image') {
-        //     steps {
-        //         dir("${SERVICE_NAME}") {
-        //             sh "docker build -t ${DOCKER_IMAGE} ."
-        //             withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-        //                 sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-        //                 sh "docker push ${DOCKER_IMAGE}"
-        //             }
-        //         }
-        //     }
-        // }
+        // 4. Build & Push
+        stage('4. Build & Push Image') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    sh "docker build -t ${DOCKER_IMAGE} ."
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-login', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                        sh "docker push ${DOCKER_IMAGE}"
+                    }
+                }
+            }
+        }
 
-        // // 5. Functional Tests
-        // stage('5. Functional Tests') {
-        //     steps {
-        //         dir("${SERVICE_NAME}") {
-        //             sh 'GOWORK=off go test -v -run Functional ./... || exit 0'
-        //         }
-        //     }
-        // }
+        // 5. Functional Tests
+        stage('5. Functional Tests') {
+            steps {
+                dir("${SERVICE_NAME}") {
+                    sh 'GOWORK=off go test -v -run Functional ./... || exit 0'
+                }
+            }
+        }
 
         // 6. Deploy & Verify
         stage('6. Deploy & Verify K8s') {
